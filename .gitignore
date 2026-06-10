@@ -1,0 +1,31 @@
+# 환경 변수 (API 키 포함 — 절대 커밋 금지)
+.env
+
+# 작업 폴더 (업로드 파일 및 중간 산출물)
+jobs/
+
+# Python 캐시
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 가상 환경
+.venv/
+venv/
+env/
+
+# 패키지 빌드
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.playwright-mcp/

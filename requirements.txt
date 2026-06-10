@@ -1,0 +1,14 @@
+# Phase 1
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+# Phase 3+ (OpenAI: Whisper / GPT)
+openai
+# Phase 5 (장면 감지)
+scenedetect[opencv]
+# On-Premise 모드
+faster-whisper
+transformers
+torch
+sentencepiece

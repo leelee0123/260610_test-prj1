@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영상 자동 분석 파이프라인 — 소개</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --ink:   #1a1a22;
+  --sub:   #4a4a5a;
+  --dim:   #8a8a9a;
+  --line:  #e0deda;
+  --amber: #d4860a;
+  --amber-bg: #fff8ee;
+  --green: #1a7a48;
+  --panel: #f7f6f4;
+  --mono: "IBM Plex Mono", monospace;
+  --sans: "Noto Sans KR", sans-serif;
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+html, body {
+  width: 210mm;
+  height: 297mm;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: #fff;
+  font-size: 9.5pt;
+  line-height: 1.6;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 13mm 15mm 11mm;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+/* ── 헤더 ── */
+.hd {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+}
+.hd-left { flex: 1; }
+.kicker {
+  font-family: var(--mono); font-size: 7.5pt; letter-spacing: .22em;
+  color: var(--amber); margin-bottom: 5px;
+}
+.title { font-size: 21pt; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.tagline { margin-top: 5px; font-size: 9pt; color: var(--sub); font-weight: 300; }
+.hd-right {
+  text-align: right; font-family: var(--mono); font-size: 7.5pt;
+  color: var(--dim); line-height: 1.8; padding-top: 2px;
+}
+.hd-right strong { color: var(--ink); font-weight: 500; }
+
+/* ── 개요 ── */
+.intro {
+  background: var(--panel); border-left: 3px solid var(--amber);
+  padding: 9px 12px; border-radius: 0 3px 3px 0;
+  font-size: 9pt; color: var(--sub); font-weight: 300;
+}
+.intro strong { color: var(--ink); font-weight: 600; }
+
+/* ── 섹션 타이틀 ── */
+.sec {
+  font-family: var(--mono); font-size: 7.5pt; letter-spacing: .2em;
+  color: var(--dim); text-transform: uppercase; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sec::after { content:""; flex:1; height:1px; background:var(--line); }
+
+/* ── 파이프라인 ── */
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.step {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 4px; padding: 8px 7px; position: relative;
+}
+.step-num {
+  font-family: var(--mono); font-size: 7pt; color: var(--amber);
+  letter-spacing: .08em; margin-bottom: 4px;
+}
+.step-label {
+  font-size: 8pt; font-weight: 600; line-height: 1.3; margin-bottom: 3px;
+}
+.step-desc {
+  font-size: 7.5pt; color: var(--sub); font-weight: 300; line-height: 1.4;
+}
+.step::after {
+  content: "›";
+  position: absolute; right: -7px; top: 50%; transform: translateY(-50%);
+  color: var(--line); font-size: 14pt; font-weight: 300; z-index: 1;
+}
+.step:last-child::after { display: none; }
+
+/* ── 입출력 ── */
+.io-grid {
+  display: grid; grid-template-columns: 1fr 24px 1fr;
+  gap: 0; align-items: center;
+}
+.io-box {
+  border: 1px solid var(--line); border-radius: 4px;
+  padding: 8px 10px; background: var(--panel);
+}
+.io-title {
+  font-family: var(--mono); font-size: 7.5pt; color: var(--amber);
+  letter-spacing: .1em; margin-bottom: 5px;
+}
+.io-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 8.5pt; margin-bottom: 3px;
+}
+.io-item:last-child { margin-bottom: 0; }
+.io-dot {
+  width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+}
+.dot-in  { background: #4a90d9; }
+.dot-out { background: var(--green); }
+.arrow-col { text-align: center; font-size: 18pt; color: var(--line); }
+
+/* ── 기능/제약 두 컬럼 ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.feature-list, .constraint-list { list-style: none; }
+.feature-list li, .constraint-list li {
+  display: flex; align-items: flex-start; gap: 7px;
+  font-size: 8.5pt; margin-bottom: 4px; line-height: 1.4;
+}
+.feature-list li::before {
+  content: "✓"; color: var(--green); font-weight: 700;
+  font-size: 8pt; flex-shrink: 0; margin-top: 1px;
+}
+.constraint-list li::before {
+  content: "◆"; color: var(--amber); font-size: 6pt;
+  flex-shrink: 0; margin-top: 3px;
+}
+
+/* ── 기술 스택 ── */
+.stack-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag {
+  font-family: var(--mono); font-size: 7.5pt;
+  padding: 3px 8px; border: 1px solid var(--line);
+  border-radius: 2px; color: var(--sub); background: var(--panel);
+}
+.tag.hi { border-color: var(--amber); color: var(--amber); background: var(--amber-bg); }
+
+/* ── 푸터 ── */
+.footer {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.footer p { font-family: var(--mono); font-size: 7pt; color: var(--dim); }
+.footer .url { color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 헤더 -->
+  <div class="hd">
+    <div class="hd-left">
+      <div class="kicker">VIDEO ANALYSIS PIPELINE</div>
+      <div class="title">영상 자동 분석<br>파이프라인</div>
+      <div class="tagline">영상 1개 업로드 → 자막 생성·교정·장면 분석을 자동으로 처리하는 웹 도구</div>
+    </div>
+    <div class="hd-right">
+      <strong>FastAPI</strong> + OpenAI API<br>
+      Whisper · GPT-4o · TTS<br>
+      PySceneDetect · ffmpeg
+    </div>
+  </div>
+
+  <!-- 개요 -->
+  <div class="intro">
+    영상 파일을 업로드하면 <strong>오디오 추출 → Whisper 자막 생성 → GPT 자막 교정 → 장면 감지 → 장면별 GPT 비전 분석 → 메타데이터 통합</strong>의
+    6단계 파이프라인이 자동 실행됩니다. 결과물로 원본 SRT, 교정 SRT, 장면 분석이 담긴 JSON을 제공합니다.
+    모든 처리 현황은 웹 페이지에서 실시간으로 확인할 수 있습니다.
+  </div>
+
+  <!-- 파이프라인 -->
+  <div>
+    <div class="sec">6단계 처리 파이프라인</div>
+    <div class="pipeline">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-label">오디오 추출</div>
+        <div class="step-desc">ffmpeg<br>16kHz 모노<br>25 MB 자동 분할</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-label">자막 생성</div>
+        <div class="step-desc">Whisper API<br>verbose_json<br>SRT 변환</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-label">자막 교정</div>
+        <div class="step-desc">GPT-4o-mini<br>텍스트만 교정<br>타임코드 보존</div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-label">장면 감지</div>
+        <div class="step-desc">PySceneDetect<br>키프레임<br>JPEG 추출</div>
+      </div>
+      <div class="step">
+        <div class="step-num">05</div>
+        <div class="step-label">장면 분석</div>
+        <div class="step-desc">GPT-4o Vision<br>요약·요소·<br>분위기 추출</div>
+      </div>
+      <div class="step">
+        <div class="step-num">06</div>
+        <div class="step-label">통합 출력</div>
+        <div class="step-desc">영상 정보 +<br>장면 + 자막<br>→ JSON</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 입출력 -->
+  <div>
+    <div class="sec">입력 / 출력</div>
+    <div class="io-grid">
+      <div class="io-box">
+        <div class="io-title">INPUT</div>
+        <div class="io-item"><div class="io-dot dot-in"></div>영상 파일 1개 (MP4 / MOV / MKV / AVI / WEBM)</div>
+        <div class="io-item"><div class="io-dot dot-in"></div>OpenAI API 키 (.env)</div>
+      </div>
+      <div class="arrow-col">→</div>
+      <div class="io-box">
+        <div class="io-title">OUTPUT</div>
+        <div class="io-item"><div class="io-dot dot-out"></div><strong>original.srt</strong> — Whisper 원본 자막</div>
+        <div class="io-item"><div class="io-dot dot-out"></div><strong>corrected.srt</strong> — GPT 교정 자막 (타임코드 동일)</div>
+        <div class="io-item"><div class="io-dot dot-out"></div><strong>metadata.json</strong> — 영상 정보 + 장면별 분석</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 주요 기능 / 설계 원칙 -->
+  <div class="two-col">
+    <div>
+      <div class="sec">주요 기능</div>
+      <ul class="feature-list">
+        <li>실시간 처리 현황 표시 (2초 폴링)</li>
+        <li>자막 원본/교정본 단어 단위 diff 뷰어</li>
+        <li>원본·교정본 나란히 비교 (스크롤 동기화)</li>
+        <li>장면 키프레임 + 분석 카드 웹 표시</li>
+        <li>결과 파일 원클릭 다운로드</li>
+        <li>긴 영상 자동 분할 처리 (25 MB 제한 대응)</li>
+      </ul>
+    </div>
+    <div>
+      <div class="sec">설계 원칙</div>
+      <ul class="constraint-list">
+        <li><strong>타임코드 불변</strong> — GPT에 텍스트만 전달, 타임코드는 코드가 원본에서 재조립</li>
+        <li><strong>API 키 분리</strong> — .env 보관, .env.example만 커밋</li>
+        <li><strong>단계별 폴백</strong> — 배치 응답 불일치 시 원문 유지</li>
+        <li><strong>장면 없을 때</strong> — 영상 전체를 1개 장면으로 처리</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 기술 스택 -->
+  <div>
+    <div class="sec">기술 스택</div>
+    <div class="stack-row">
+      <span class="tag hi">Python 3.14</span>
+      <span class="tag hi">FastAPI</span>
+      <span class="tag hi">OpenAI API</span>
+      <span class="tag">Whisper-1</span>
+      <span class="tag">GPT-4o / GPT-4o-mini</span>
+      <span class="tag">ffmpeg / ffprobe</span>
+      <span class="tag">PySceneDetect</span>
+      <span class="tag">OpenCV</span>
+      <span class="tag">python-dotenv</span>
+      <span class="tag">uvicorn</span>
+      <span class="tag">Vanilla JS (폴링)</span>
+      <span class="tag">IBM Plex Fonts</span>
+    </div>
+  </div>
+
+  <!-- metadata.json 스키마 미리보기 -->
+  <div>
+    <div class="sec">metadata.json 스키마</div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:8px 12px;">
+      <pre style="font-family:var(--mono);font-size:7.5pt;color:var(--sub);line-height:1.7;white-space:pre-wrap;">{
+  "video":  { "filename", "resolution", "fps", "duration_sec", "size_bytes" },
+  "scenes": [ { "index", "start", "end", "keyframe",
+                "subtitles": [ { "index", "timecode", "text" } ],
+                "analysis":  { "summary", "elements", "mood", "subtitle_relevance" } } ]
+}</pre>
+    </div>
+  </div>
+
+  <!-- 푸터 -->
+  <div class="footer">
+    <p>영상 자동 분석 파이프라인 &nbsp;·&nbsp; FastAPI + OpenAI API</p>
+    <p>실행: <span class="url">.venv\Scripts\uvicorn.exe app.main:app --port 8000</span></p>
+  </div>
+
+</div>
+</body>
+</html>
